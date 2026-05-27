@@ -7,8 +7,10 @@
 A hands-on cybersecurity lab that deploys a domain-joined Windows honeypot with real-time intrusion detection and SIEM monitoring — built entirely in VMware Workstation. This project demonstrates network segmentation, IDS rule authoring, SIEM deployment, and end-to-end attack chain detection relevant to SOC Analyst and Blue Team roles.
 
 ---
+## 🗺️ General Lab Architecture
+<img width="761" height="613" alt="image" src="https://github.com/user-attachments/assets/ebb9439c-0ce1-4d3a-be0f-59c8db26dfea" />
 
-## 🗺️ Lab Architecture
+## 🗺️ Lab Specific Architecture 
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
