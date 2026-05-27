@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Active Directory Honeypot Lab | VMware Security Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e14;
+  --bg2: #0f1520;
+  --bg3: #141c2e;
+  --panel: #111827;
+  --border: #1e2d45;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #39ff14;
+  --warn: #ffb800;
+  --danger: #ff3860;
+  --text: #c8d6e5;
+  --text-dim: #6b7f96;
+  --text-bright: #e8f4ff;
+  --mono: 'Share Tech Mono', monospace;
+  --head: 'Syne', sans-serif;
+  --body: 'DM Sans', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* Scanline overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,212,255,0.015) 2px,
+    rgba(0,212,255,0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 4rem 2rem;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: gridPulse 8s ease-in-out infinite;
+}
+
+@keyframes gridPulse {
+  0%,100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+  top: -100px;
+  right: -100px;
+  pointer-events: none;
+}
+
+.hero-glow2 {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,107,53,0.06) 0%, transparent 70%);
+  bottom: -50px;
+  left: 10%;
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.3);
+  border-radius: 4px;
+  padding: 4px 14px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+}
+
+.badge::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent3);
+  animation: blink 1.5s step-end infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+h1.title {
+  font-family: var(--head);
+  font-size: clamp(2.2rem, 6vw, 4.5rem);
+  font-weight: 800;
+  line-height: 1.05;
+  color: var(--text-bright);
+  margin-bottom: 1.2rem;
+}
+
+h1.title span {
+  color: var(--accent);
+  text-shadow: 0 0 40px rgba(0,212,255,0.4);
+}
+
+.hero-desc {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin-bottom: 2.5rem;
+  font-weight: 300;
+  line-height: 1.8;
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2.5rem;
+}
+
+.tag {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.tag-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+.tag-orange { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid rgba(255,107,53,0.2); }
+.tag-green { background: rgba(57,255,20,0.1); color: var(--accent3); border: 1px solid rgba(57,255,20,0.2); }
+.tag-yellow { background: rgba(255,184,0,0.1); color: var(--warn); border: 1px solid rgba(255,184,0,0.2); }
+
+.stat-row {
+  display: flex;
+  gap: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.stat { text-align: center; }
+.stat-num {
+  display: block;
+  font-family: var(--mono);
+  font-size: 1.8rem;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0,212,255,0.5);
+}
+.stat-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(10,14,20,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+}
+
+.nav-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.nav-inner a {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-decoration: none;
+  padding: 1rem 1.2rem;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.nav-inner a:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+/* ── LAYOUT ── */
+.content {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ── ARCHITECTURE ── */
+.arch-section {
+  padding: 5rem 0 3rem;
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 0.5rem;
+}
+
+h2 {
+  font-family: var(--head);
+  font-size: clamp(1.5rem, 3vw, 2.2rem);
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-family: var(--head);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 0.75rem;
+}
+
+.arch-diagram {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2.5rem;
+  margin: 2rem 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  overflow-x: auto;
+  position: relative;
+}
+
+.arch-diagram::before {
+  content: 'NETWORK TOPOLOGY';
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  background: var(--bg2);
+  padding: 0 10px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  border: 1px solid var(--border);
+  border-radius: 0 0 4px 4px;
+}
+
+.topo {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.topo-vm {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.topo-vm.honeypot { border-color: rgba(255,56,96,0.5); }
+.topo-vm.dc { border-color: rgba(0,212,255,0.3); }
+.topo-vm.wazuh { border-color: rgba(57,255,20,0.3); }
+
+.topo-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.topo-vm.dc .topo-label { color: var(--accent); }
+.topo-vm.honeypot .topo-label { color: var(--danger); }
+.topo-vm.wazuh .topo-label { color: var(--accent3); }
+
+.topo-name {
+  font-size: 14px;
+  color: var(--text-bright);
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.topo-nic {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+.topo-nic span { color: var(--warn); }
+
+.net-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.net-box {
+  flex: 1;
+  min-width: 160px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 12px;
+}
+
+.net-name { color: var(--accent); font-weight: bold; margin-bottom: 4px; }
+.net-detail { color: var(--text-dim); font-size: 11px; }
+
+/* ── PHASE SECTIONS ── */
+.phase {
+  margin: 4rem 0;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+}
+
+.phase-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.phase-num {
+  font-family: var(--mono);
+  font-size: 3rem;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--border);
+  min-width: 60px;
+}
+
+.phase-title { flex: 1; }
+
+/* ── STEPS ── */
+.step {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.step-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+}
+
+.step-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 4px;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.step-title {
+  font-family: var(--head);
+  font-weight: 700;
+  color: var(--text-bright);
+  font-size: 0.95rem;
+}
+
+.step-body {
+  padding: 1.5rem;
+}
+
+.step-body p {
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.step-body ul, .step-body ol {
+  margin: 0.75rem 0 1rem 1.5rem;
+  color: var(--text);
+}
+
+.step-body li { margin-bottom: 0.4rem; }
+
+/* ── CODE BLOCKS ── */
+pre {
+  background: #070b12;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 6px 6px 0;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+  position: relative;
+}
+
+pre::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: #7dd3fc;
+  line-height: 1.7;
+}
+
+pre code { color: #c8d6e5; }
+
+.kw { color: #ff79c6; }
+.cm { color: #6272a4; font-style: italic; }
+.str { color: #f1fa8c; }
+.num { color: #bd93f9; }
+.fn { color: var(--accent); }
+.var { color: var(--accent2); }
+
+/* ── CALLOUTS ── */
+.callout {
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  font-size: 0.9rem;
+}
+
+.callout-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 1px; }
+
+.callout.warn {
+  background: rgba(255,184,0,0.08);
+  border: 1px solid rgba(255,184,0,0.3);
+  color: #e8c84a;
+}
+
+.callout.danger {
+  background: rgba(255,56,96,0.08);
+  border: 1px solid rgba(255,56,96,0.3);
+  color: #ff8090;
+}
+
+.callout.info {
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.2);
+  color: var(--text);
+}
+
+.callout.success {
+  background: rgba(57,255,20,0.06);
+  border: 1px solid rgba(57,255,20,0.2);
+  color: #90ff70;
+}
+
+/* ── NIC TABLE ── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin: 1rem 0;
+}
+
+th {
+  background: var(--bg3);
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  text-align: left;
+  border: 1px solid var(--border);
+}
+
+td {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+
+tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+/* ── CHECKLIST ── */
+.checklist {
+  list-style: none;
+  margin: 1rem 0;
+}
+
+.checklist li {
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.9rem;
+}
+
+.checklist li::before {
+  content: '□';
+  font-family: var(--mono);
+  color: var(--text-dim);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── XREF ── */
+.xref {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--warn);
+  background: rgba(255,184,0,0.08);
+  border: 1px solid rgba(255,184,0,0.25);
+  border-radius: 4px;
+  padding: 2px 8px;
+  text-decoration: none;
+  margin-left: 6px;
+  vertical-align: middle;
+  transition: all 0.2s;
+}
+
+.xref:hover {
+  background: rgba(255,184,0,0.15);
+  color: var(--warn);
+}
+
+/* ── SKILLS BOX ── */
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.skill-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem;
+}
+
+.skill-card h4 {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 6px;
+}
+
+.skill-card p {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+/* ── FOOTER ── */
+footer {
+  margin-top: 6rem;
+  padding: 2rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+/* ── INLINE CODE ── */
+.ic {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 3px;
+  padding: 1px 6px;
+  color: var(--accent);
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 3rem 0;
+}
+
+/* responsive */
+@media (max-width: 700px) {
+  .topo { grid-template-columns: 1fr; }
+  .stat-row { gap: 1.5rem; }
+  .phase-header { flex-direction: column; gap: 0.5rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-inner">
+    <div class="badge">Blue Team Lab · VMware · Portfolio Project</div>
+    <h1 class="title">Active Directory<br><span>Honeypot Lab</span><br>with IDS &amp; SIEM</h1>
+    <p class="hero-desc">
+      A hands-on cybersecurity lab deploying a domain-joined Windows honeypot with real-time intrusion detection (Snort) and SIEM monitoring (Wazuh) — built entirely in VMware Workstation.
+    </p>
+    <div class="tag-row">
+      <span class="tag tag-blue">VMware Workstation</span>
+      <span class="tag tag-blue">Windows Server 2019</span>
+      <span class="tag tag-blue">Windows 10</span>
+      <span class="tag tag-orange">Snort IDS</span>
+      <span class="tag tag-green">Wazuh SIEM</span>
+      <span class="tag tag-green">Sysmon</span>
+      <span class="tag tag-yellow">Honeypot</span>
+      <span class="tag tag-yellow">Active Directory</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Phases</span></div>
+      <div class="stat"><span class="stat-num">4</span><span class="stat-label">Virtual Machines</span></div>
+      <div class="stat"><span class="stat-num">3</span><span class="stat-label">Virtual Networks</span></div>
+      <div class="stat"><span class="stat-num">5</span><span class="stat-label">Attack Vectors Monitored</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a href="#architecture">Architecture</a>
+    <a href="#phase1">Phase 1 · Honeypot</a>
+    <a href="#phase2">Phase 2 · Snort IDS</a>
+    <a href="#phase3">Phase 3 · Wazuh SIEM</a>
+    <a href="#verification">Verification</a>
+    <a href="#skills">Skills Demonstrated</a>
+    <a href="troubleshooting.html">🔧 Troubleshooting</a>
+  </div>
+</nav>
+
+<div class="content">
+
+<!-- ARCHITECTURE -->
+<section class="arch-section" id="architecture">
+  <p class="section-label">// Overview</p>
+  <h2>Lab Architecture</h2>
+  <p style="color:var(--text-dim); margin-bottom:1.5rem; max-width:700px;">
+    Three VMware virtual networks segment the lab: an internal domain network (VMnet1), a dedicated Wazuh logging channel (VMnet3), and a bridged internet-facing adapter. CLIENT1 spans all three, making it the intentionally exposed attack surface while keeping the domain controller and host isolated.
+  </p>
+
+  <div class="arch-diagram">
+    <div class="topo">
+      <div class="topo-vm dc">
+        <div class="topo-label">Domain Controller</div>
+        <div class="topo-name">DC-Win2019</div>
+        <div class="topo-nic">
+          NIC 1: VMnet1<br>
+          <span>192.168.1.10</span><br>
+          DNS + DHCP + AD DS
+        </div>
+      </div>
+      <div class="topo-vm honeypot">
+        <div class="topo-label">⚠ Honeypot</div>
+        <div class="topo-name">CLIENT1</div>
+        <div class="topo-nic">
+          NIC 1: VMnet1 <span>(domain)</span><br>
+          NIC 2: Bridged <span>(internet)</span><br>
+          NIC 3: VMnet3 <span>(log channel)</span><br>
+          <br>
+          Snort IDS · Sysmon<br>
+          Wazuh Agent
+        </div>
+      </div>
+      <div class="topo-vm wazuh">
+        <div class="topo-label">SIEM Manager</div>
+        <div class="topo-name">Wazuh-Ubuntu</div>
+        <div class="topo-nic">
+          NIC 1: VMnet1<br>
+          <span>172.16.0.101</span><br>
+          Wazuh Manager<br>
+          OpenSearch Dashboard
+        </div>
+      </div>
+    </div>
+    <div class="net-row" style="margin-top:1.5rem;">
+      <div class="net-box">
+        <div class="net-name">VMnet1 — Internal</div>
+        <div class="net-detail">Host-only · DC as DHCP<br>Domain + SIEM traffic</div>
+      </div>
+      <div class="net-box">
+        <div class="net-name">VMnet3 — Log Channel</div>
+        <div class="net-detail">Host-only · Static IPs<br>Wazuh agent → manager only</div>
+      </div>
+      <div class="net-box">
+        <div class="net-name">Bridged — Internet</div>
+        <div class="net-detail">Physical NIC passthrough<br>Router port forwarding → CLIENT1</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout danger">
+    <span class="callout-icon">⚠</span>
+    <div><strong>Before proceeding:</strong> Take a VMware snapshot of CLIENT1 now. Label it <code>pre-honeypot-baseline</code>. CLIENT1 will be intentionally made vulnerable — this snapshot is your instant restore point.</div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PHASE 1 -->
+<section class="phase" id="phase1">
+  <div class="phase-header">
+    <div class="phase-num">01</div>
+    <div class="phase-title">
+      <p class="section-label">// Phase 1</p>
+      <h2>Isolating CLIENT1 as a Honeypot</h2>
+      <p style="color:var(--text-dim);">Network segmentation ensures the exposed VM cannot pivot to your host or domain controller, while remaining reachable from the internet.</p>
+    </div>
+  </div>
+
+  <!-- Step 1 -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 1</span>
+      <span class="step-title">Create VMnet3 in VMware Virtual Network Editor</span>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>Open VMware Workstation → <strong>Edit → Virtual Network Editor</strong></li>
+        <li>Click <strong>Add Network</strong> → select <strong>VMnet3</strong></li>
+        <li>Set type to <strong>Host-only</strong></li>
+        <li><strong>Disable DHCP</strong> on VMnet3 — IPs on this segment will be static</li>
+        <li>Uncheck "Connect a host virtual adapter to this network" for VMnet3</li>
+        <li>Click <strong>Apply → OK</strong></li>
+      </ol>
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div>VMnet1 and VMnet3 are isolated virtual switches by default — they have no routing path between them unless a VM has NICs on both networks (which CLIENT1 will). The steps below explicitly block that cross-network path.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 2</span>
+      <span class="step-title">Add NICs to CLIENT1 — Three-Adapter Layout</span>
+    </div>
+    <div class="step-body">
+      <p>Shut down CLIENT1, then go to <strong>VM Settings → Add → Network Adapter</strong> twice to create the full layout:</p>
+      <table>
+        <thead>
+          <tr><th>NIC</th><th>VMware Network</th><th>IP Assignment</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>NIC 1</td><td>VMnet1 (Host-only)</td><td>DHCP from DC</td><td>Domain membership, AD authentication</td></tr>
+          <tr><td>NIC 2</td><td>Bridged (auto-detect)</td><td>DHCP reservation on router</td><td>Internet-facing honeypot surface</td></tr>
+          <tr><td>NIC 3</td><td>VMnet3 (Host-only)</td><td>Static: 192.168.100.10</td><td>Wazuh log forwarding only</td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <span class="callout-icon">⚡</span>
+        <div><strong>NIC 2 Internet Exposure:</strong> The Bridged adapter assigns CLIENT1 its own LAN IP from your router (e.g. 192.168.1.150). Log into your router admin page and create a <strong>DHCP reservation</strong> binding CLIENT1's MAC address to a fixed IP. Then add port-forwarding rules for ports 3389, 445, 21, and 23 pointing to that IP. <a class="xref" href="troubleshooting.html#ts-nic2">⚠ See TS-01</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Step 3 -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 3</span>
+      <span class="step-title">Enforce Network Isolation — Block Cross-VMnet Routing</span>
+    </div>
+    <div class="step-body">
+      <p>Because CLIENT1 has NICs on both VMnet1 and VMnet3, you must prevent it from routing traffic between them. Run these commands on CLIENT1 in <strong>PowerShell as Administrator</strong>.</p>
+
+      <p><strong>Part A — Remove gateway from VMnet3 adapter</strong></p>
+<pre data-lang="powershell"><code><span class="cm"># Identify adapter names first</span>
+<span class="fn">Get-NetAdapter</span>
+
+<span class="cm"># Set static IP on VMnet3 with NO gateway</span>
+netsh interface ip set address name=<span class="str">"Ethernet 3"</span> static <span class="num">192.168.100.10</span> <span class="num">255.255.255.0</span>
+<span class="cm"># Note: omitting the gateway parameter means none is set</span></code></pre>
+
+      <p><strong>Part B — Disable IP forwarding on CLIENT1</strong></p>
+<pre data-lang="powershell"><code><span class="fn">Set-NetIPInterface</span> -Forwarding Disabled -AddressFamily IPv4</code></pre>
+
+      <p><strong>Part C — Firewall rules blocking cross-network traffic</strong></p>
+<pre data-lang="powershell"><code><span class="cm"># Block VMnet3 adapter from reaching VMnet1 subnet</span>
+<span class="fn">New-NetFirewallRule</span> -DisplayName <span class="str">"Block VMnet3 to VMnet1"</span> `
+  -Direction Outbound `
+  -RemoteAddress <span class="num">192.168.1.0/24</span> `
+  -InterfaceAlias <span class="str">"Ethernet 3"</span> `
+  -Action Block -Profile Any
+
+<span class="cm"># Block VMnet1 adapter from reaching VMnet3 subnet</span>
+<span class="fn">New-NetFirewallRule</span> -DisplayName <span class="str">"Block VMnet1 to VMnet3"</span> `
+  -Direction Outbound `
+  -RemoteAddress <span class="num">192.168.100.0/24</span> `
+  -InterfaceAlias <span class="str">"Ethernet 1"</span> `
+  -Action Block -Profile Any</code></pre>
+
+      <p><strong>Part D — Protect DC from VMnet3 (run on DC)</strong></p>
+<pre data-lang="powershell"><code><span class="fn">New-NetFirewallRule</span> -DisplayName <span class="str">"Block Honeypot VMnet3"</span> `
+  -Direction Inbound `
+  -RemoteAddress <span class="num">192.168.100.0/24</span> `
+  -Action Block -Profile Any</code></pre>
+
+      <p><strong>Part E — Verify isolation</strong></p>
+<pre data-lang="powershell"><code><span class="cm"># This should FAIL (DC unreachable from VMnet3 interface)</span>
+<span class="fn">Test-NetConnection</span> -ComputerName <span class="num">192.168.1.1</span> -Source <span class="num">192.168.100.10</span>
+
+<span class="cm"># This should SUCCEED (Wazuh Manager reachable)</span>
+<span class="fn">Test-NetConnection</span> -ComputerName <span class="num">172.16.0.101</span> -Port <span class="num">1514</span></code></pre>
+
+      <table>
+        <thead><tr><th>Traffic Path</th><th>Status</th><th>Enforced By</th></tr></thead>
+        <tbody>
+          <tr><td>Internet → CLIENT1 NIC2</td><td style="color:var(--accent3)">✓ Allowed</td><td>Router port forwarding</td></tr>
+          <tr><td>CLIENT1 → DC (VMnet1)</td><td style="color:var(--accent3)">✓ Allowed</td><td>Domain membership</td></tr>
+          <tr><td>CLIENT1 VMnet3 → VMnet1</td><td style="color:var(--danger)">✗ Blocked</td><td>IP forwarding disabled + firewall</td></tr>
+          <tr><td>VMnet3 → Host OS</td><td style="color:var(--danger)">✗ Blocked</td><td>VMware virtual switch isolation</td></tr>
+          <tr><td>Wazuh Agent → Manager (port 1514)</td><td style="color:var(--accent3)">✓ Allowed</td><td>VMnet1 only</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Step 4 -->
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 4</span>
+      <span class="step-title">Intentionally Weaken CLIENT1 — Honeypot Configuration</span>
+    </div>
+    <div class="step-body">
+      <div class="callout danger">
+        <span class="callout-icon">🔴</span>
+        <div><strong>Take a snapshot NOW</strong> before weakening CLIENT1. Right-click CLIENT1 → Snapshot → Take Snapshot → name it <code>pre-honeypot-baseline</code>.</div>
+      </div>
+
+      <p><strong>1. Disable Windows Defender</strong></p>
+<pre data-lang="powershell"><code><span class="fn">Set-MpPreference</span> -DisableRealtimeMonitoring <span class="kw">$true</span>
+<span class="fn">Set-MpPreference</span> -DisableBehaviorMonitoring <span class="kw">$true</span>
+<span class="fn">Set-MpPreference</span> -DisableIOAVProtection <span class="kw">$true</span>
+<span class="fn">Set-MpPreference</span> -DisableScriptScanning <span class="kw">$true</span>
+
+<span class="cm"># Verify</span>
+<span class="fn">Get-MpPreference</span> | Select-Object DisableRealtimeMonitoring</code></pre>
+
+      <p><strong>2. Disable Windows Firewall</strong></p>
+<pre data-lang="powershell"><code><span class="fn">Set-NetFirewallProfile</span> -Profile Domain,Public,Private -Enabled False
+<span class="fn">Get-NetFirewallProfile</span> | Select-Object Name, Enabled</code></pre>
+
+      <p><strong>3. Enable SMBv1</strong> <a class="xref" href="troubleshooting.html#ts-smb">⚠ See TS-03</a></p>
+<pre data-lang="powershell"><code><span class="cm"># Windows 10 requires enabling the feature first</span>
+<span class="fn">Enable-WindowsOptionalFeature</span> -Online -FeatureName SMB1Protocol -All -NoRestart
+<span class="fn">Enable-WindowsOptionalFeature</span> -Online -FeatureName SMB1Protocol-Server -NoRestart
+
+<span class="cm"># Reboot required, then run:</span>
+<span class="fn">Start-Service</span> -Name LanmanServer
+<span class="fn">Set-SmbServerConfiguration</span> -EnableSMB1Protocol <span class="kw">$true</span> -Force
+<span class="fn">Get-SmbServerConfiguration</span> | Select-Object EnableSMB1Protocol</code></pre>
+
+      <p><strong>4. Enable RDP without NLA</strong></p>
+<pre data-lang="powershell"><code><span class="cm"># Enable RDP</span>
+<span class="fn">Set-ItemProperty</span> -Path <span class="str">'HKLM:\System\CurrentControlSet\Control\Terminal Server'</span> `
+  -Name <span class="str">"fDenyTSConnections"</span> -Value <span class="num">0</span>
+
+<span class="cm"># Disable Network Level Authentication</span>
+<span class="fn">Set-ItemProperty</span> -Path <span class="str">'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp'</span> `
+  -Name <span class="str">"UserAuthentication"</span> -Value <span class="num">0</span></code></pre>
+
+      <p><strong>5. Create honeypot users</strong></p>
+<pre data-lang="powershell"><code><span class="var">$pw1</span> = <span class="fn">ConvertTo-SecureString</span> <span class="str">"admin123"</span> -AsPlainText -Force
+<span class="fn">New-LocalUser</span> -Name <span class="str">"admin"</span> -Password <span class="var">$pw1</span> -FullName <span class="str">"Administrator"</span>
+<span class="fn">Add-LocalGroupMember</span> -Group <span class="str">"Administrators"</span> -Member <span class="str">"admin"</span>
+
+<span class="var">$pw2</span> = <span class="fn">ConvertTo-SecureString</span> <span class="str">"Password1"</span> -AsPlainText -Force
+<span class="fn">New-LocalUser</span> -Name <span class="str">"svc_backup"</span> -Password <span class="var">$pw2</span> -Description <span class="str">"Backup Service Account"</span>
+<span class="fn">Add-LocalGroupMember</span> -Group <span class="str">"Administrators"</span> -Member <span class="str">"svc_backup"</span></code></pre>
+
+      <p><strong>6. Install FTP server (Windows 10)</strong> <a class="xref" href="troubleshooting.html#ts-ftp">⚠ See TS-06</a></p>
+<pre data-lang="powershell"><code><span class="cm"># Windows 10 uses DISM — Install-WindowsFeature is Server-only</span>
+dism /online /Enable-Feature /FeatureName:IIS-WebServer /All
+dism /online /Enable-Feature /FeatureName:IIS-FTPServer /All
+dism /online /Enable-Feature /FeatureName:IIS-ManagementConsole /All</code></pre>
+      <p>Then open <strong>IIS Manager → Sites → Add FTP Site</strong>: path <span class="ic">C:\shares</span>, port 21, Anonymous auth, no SSL.</p>
+
+      <p><strong>7. Enable Telnet</strong></p>
+<pre data-lang="powershell"><code>dism /online /Enable-Feature /FeatureName:TelnetServer
+net start tlntsvr
+<span class="fn">Set-Service</span> -Name tlntsvr -StartupType Automatic</code></pre>
+
+      <p><strong>8. Create fake lure files</strong></p>
+<pre data-lang="powershell"><code><span class="fn">New-Item</span> -Path <span class="str">"C:\shares"</span> -ItemType Directory -Force
+<span class="fn">New-SmbShare</span> -Name <span class="str">"shared"</span> -Path <span class="str">"C:\shares"</span> -FullAccess <span class="str">"Everyone"</span>
+<span class="fn">Set-Content</span> <span class="str">"C:\shares\passwords.txt"</span> <span class="str">"admin:admin123`nroot:toor`nbackup:backup2024"</span>
+<span class="fn">Set-Content</span> <span class="str">"C:\shares\network_diagram.txt"</span> <span class="str">"DC: 192.168.1.10`nSQL: 192.168.1.20"</span>
+
+<span class="var">$desktop</span> = <span class="str">"C:\Users\admin\Desktop"</span>
+<span class="fn">Copy-Item</span> <span class="str">"C:\shares\passwords.txt"</span> <span class="str">"$desktop\passwords.txt"</span></code></pre>
+
+      <p><strong>Quick verification checklist</strong></p>
+<pre data-lang="powershell"><code>Write-Host <span class="str">"=== Honeypot Status ==="</span> -ForegroundColor Cyan
+<span class="fn">Get-MpPreference</span> | Select-Object DisableRealtimeMonitoring
+<span class="fn">Get-NetFirewallProfile</span> | Select-Object Name, Enabled
+<span class="fn">Get-SmbServerConfiguration</span> | Select-Object EnableSMB1Protocol
+<span class="fn">Get-LocalUser</span> | Select-Object Name, Enabled
+netstat -an | findstr <span class="str">"LISTENING"</span></code></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PHASE 2 -->
+<section class="phase" id="phase2">
+  <div class="phase-header">
+    <div class="phase-num">02</div>
+    <div class="phase-title">
+      <p class="section-label">// Phase 2</p>
+      <h2>Installing Snort IDS on CLIENT1</h2>
+      <p style="color:var(--text-dim);">Snort monitors live network traffic on CLIENT1's internet-facing adapter and writes alerts to a log file that Wazuh will later ingest.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 1</span>
+      <span class="step-title">Install Npcap (Packet Capture Driver)</span>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>Download Npcap from <strong>https://npcap.com/#download</strong></li>
+        <li>Run installer — check these options:
+          <ul>
+            <li>✅ <strong>Install Npcap in WinPcap API-compatible mode</strong> (required for Snort)</li>
+            <li>✅ Restrict Npcap driver's access to Administrators only</li>
+          </ul>
+        </li>
+        <li>Reboot CLIENT1 after install</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 2</span>
+      <span class="step-title">Install Snort 2.9.x</span>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>Download from <strong>https://www.snort.org/downloads</strong> — choose <strong>Snort 2.9.x Windows binary</strong> (not Snort 3)</li>
+        <li>Run installer, accept defaults, install to <span class="ic">C:\Snort</span></li>
+      </ol>
+      <p>Expected directory structure after install:</p>
+<pre data-lang="text"><code>C:\Snort\
+  bin\        ← snort.exe
+  etc\        ← snort.conf
+  log\        ← alerts written here
+  rules\      ← rule files
+  lib\        ← dynamic preprocessors</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 3</span>
+      <span class="step-title">Download Community Rules &amp; Create Support Files</span>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>Download <strong>Snort Community Rules</strong> from https://www.snort.org/downloads#rules (no account needed)</li>
+        <li>Extract and copy <span class="ic">community.rules</span> to <span class="ic">C:\Snort\rules\community.rules</span></li>
+      </ol>
+<pre data-lang="cmd"><code><span class="cm">REM Create required empty files</span>
+type nul &gt; C:\Snort\rules\local.rules
+type nul &gt; C:\Snort\etc\white_list.rules
+type nul &gt; C:\Snort\etc\black_list.rules</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 4</span>
+      <span class="step-title">Configure snort.conf</span>
+    </div>
+    <div class="step-body">
+      <p>Open <span class="ic">C:\Snort\etc\snort.conf</span> in Notepad <strong>as Administrator</strong>. Make these edits:</p>
+
+      <p><strong>Network variables (~line 45):</strong></p>
+<pre data-lang="conf"><code>ipvar HOME_NET 192.168.1.0/24
+ipvar EXTERNAL_NET !$HOME_NET</code></pre>
+
+      <p><strong>Rule paths (~line 104):</strong></p>
+<pre data-lang="conf"><code>var RULE_PATH C:\Snort\rules
+var SO_RULE_PATH C:\Snort\rules
+var PREPROC_RULE_PATH C:\Snort\rules
+var WHITE_LIST_PATH C:\Snort\etc
+var BLACK_LIST_PATH C:\Snort\etc</code></pre>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚡</span>
+        <div>If WHITE_LIST_PATH / BLACK_LIST_PATH appear twice in the file, delete the second occurrence (which sets <code>../rules</code>) — it overrides your correct path and causes concatenation errors. <a class="xref" href="troubleshooting.html#ts-snort-path">⚠ See TS-04</a></div>
+      </div>
+
+      <p><strong>Fix dynamic preprocessor paths</strong> <a class="xref" href="troubleshooting.html#ts-dynmod">⚠ See TS-02</a> — find and replace all Linux-style paths:</p>
+      <table>
+        <thead><tr><th>Find (Linux path)</th><th>Replace with (Windows path)</th></tr></thead>
+        <tbody>
+          <tr><td>/usr/local/lib/snort_dynamicpreprocessor/</td><td>C:\Snort\lib\snort_dynamicpreprocessor</td></tr>
+          <tr><td>/usr/local/lib/snort_dynamicengine/</td><td>C:\Snort\lib\snort_dynamicengine</td></tr>
+          <tr><td>/usr/local/lib/snort_dynamicrules/</td><td>C:\Snort\lib\snort_dynamicrules</td></tr>
+        </tbody>
+      </table>
+
+<pre data-lang="cmd"><code><span class="cm">REM Create the folders if they don't exist</span>
+mkdir C:\Snort\lib\snort_dynamicpreprocessor
+mkdir C:\Snort\lib\snort_dynamicengine
+mkdir C:\Snort\lib\snort_dynamicrules</code></pre>
+
+      <p><strong>Comment out all rule includes except yours</strong> — use Notepad Ctrl+H:</p>
+      <ul>
+        <li>Find: <code>include $RULE_PATH/</code> → Replace: <code># include $RULE_PATH/</code> (comments all out)</li>
+        <li>Then remove the <code>#</code> from <strong>only</strong> <code>community.rules</code> and <code>local.rules</code></li>
+        <li>Comment out any bare text lines like <code>dynamic library rules</code> → add <code>#</code> in front <a class="xref" href="troubleshooting.html#ts-dynrule">⚠ See TS-05</a></li>
+      </ul>
+
+      <p>Final rules section should look like:</p>
+<pre data-lang="conf"><code>include $RULE_PATH\community.rules
+include $RULE_PATH\local.rules
+
+<span class="cm"># decoder and preprocessor event rules</span>
+<span class="cm"># include $PREPROC_RULE_PATH/preprocessor.rules</span>
+<span class="cm"># include $PREPROC_RULE_PATH/decoder.rules</span>
+
+<span class="cm"># dynamic library rules</span>
+<span class="cm"># include $SO_RULE_PATH/bad-traffic.rules</span>
+<span class="cm"># (...all SO rules commented out...)</span>
+
+include threshold.conf</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 5</span>
+      <span class="step-title">Add Honeypot Detection Rules to local.rules</span>
+    </div>
+    <div class="step-body">
+      <p>Open <span class="ic">C:\Snort\rules\local.rules</span> and add these rules. Ensure all quotes are <strong>straight quotes</strong> — not curly/smart quotes from copy-paste.</p>
+<pre data-lang="snort"><code><span class="cm"># RDP brute force detection</span>
+alert tcp any any -&gt; $HOME_NET 3389 (msg:<span class="str">"RDP Brute Force Attempt"</span>; threshold:type threshold, track by_src, count 5, seconds 60; sid:1000001; rev:1;)
+
+<span class="cm"># SMB scan detection</span>
+alert tcp any any -&gt; $HOME_NET 445 (msg:<span class="str">"SMB Scan Detected"</span>; flags:S; threshold:type threshold, track by_src, count 10, seconds 10; sid:1000002; rev:1;)
+
+<span class="cm"># ICMP ping (no threshold — fires on every ping)</span>
+alert icmp any any -&gt; $HOME_NET any (msg:<span class="str">"ICMP Ping Test"</span>; sid:1000003; rev:1;)
+
+<span class="cm"># Telnet connection</span>
+alert tcp any any -&gt; $HOME_NET 23 (msg:<span class="str">"Telnet Connection Attempt"</span>; sid:1000004; rev:1;)
+
+<span class="cm"># FTP connection</span>
+alert tcp any any -&gt; $HOME_NET 21 (msg:<span class="str">"FTP Connection Attempt"</span>; sid:1000005; rev:1;)</code></pre>
+      <div class="callout info">
+        <span class="callout-icon">ℹ</span>
+        <div>The original ICMP rule used <code>threshold:type threshold, count 5, seconds 5</code> which requires 5 pings to trigger. Removing the threshold means every ping fires an alert — better for initial testing. <a class="xref" href="troubleshooting.html#ts-noalert">⚠ See TS-07</a></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 6</span>
+      <span class="step-title">Find Interface Index &amp; Test Config</span>
+    </div>
+    <div class="step-body">
+<pre data-lang="cmd"><code><span class="cm">REM List all interfaces — note the index of your Bridged adapter (NIC 2)</span>
+C:\Snort\bin\snort.exe -W</code></pre>
+      <p>Then test the config (no traffic captured, just validates):</p>
+<pre data-lang="cmd"><code>C:\Snort\bin\snort.exe -T -i 2 -c C:\Snort\etc\snort.conf</code></pre>
+      <p>Expected output: <code>Snort successfully validated the configuration!</code></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 7</span>
+      <span class="step-title">Run Snort in IDS Mode</span>
+    </div>
+    <div class="step-body">
+<pre data-lang="cmd"><code>C:\Snort\bin\snort.exe -i 2 -c C:\Snort\etc\snort.conf -l C:\Snort\log -A full -K ascii</code></pre>
+      <table>
+        <thead><tr><th>Flag</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>-i 2</td><td>Listen on interface index 2 (bridged adapter)</td></tr>
+          <tr><td>-c</td><td>Path to snort.conf</td></tr>
+          <tr><td>-l</td><td>Write logs to C:\Snort\log\</td></tr>
+          <tr><td>-A full</td><td>Full alert output with packet headers</td></tr>
+          <tr><td>-K ascii</td><td>Human-readable log format</td></tr>
+        </tbody>
+      </table>
+      <p>Test by pinging CLIENT1's bridged IP from another machine, then check:</p>
+<pre data-lang="cmd"><code>type C:\Snort\log\alert.ids</code></pre>
+      <p><strong>Optional — Run as Windows service</strong> <a class="xref" href="troubleshooting.html#ts-service">⚠ See TS-08</a></p>
+<pre data-lang="cmd"><code><span class="cm">REM If service install fails, use this minimized background approach instead:</span>
+start /min "Snort IDS" "C:\Snort\bin\snort.exe" -i 2 -c "C:\Snort\etc\snort.conf" -l "C:\Snort\log" -A full -K ascii</code></pre>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- PHASE 3 -->
+<section class="phase" id="phase3">
+  <div class="phase-header">
+    <div class="phase-num">03</div>
+    <div class="phase-title">
+      <p class="section-label">// Phase 3</p>
+      <h2>Deploying Wazuh SIEM</h2>
+      <p style="color:var(--text-dim);">Wazuh provides centralized log management, alerting, and a dashboard. It runs on a separate Ubuntu VM and receives logs from both CLIENT1 and the DC.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 1</span>
+      <span class="step-title">Deploy Wazuh Manager VM (Ubuntu 22.04 LTS)</span>
+    </div>
+    <div class="step-body">
+      <ol>
+        <li>Create a new VM: Ubuntu 22.04 LTS · 4GB RAM · 2 vCPUs · 50GB disk</li>
+        <li>Assign NIC to <strong>VMnet1</strong> (same as DC and CLIENT1 NIC1)</li>
+        <li>After OS install, run the Wazuh all-in-one installer:</li>
+      </ol>
+<pre data-lang="bash"><code>curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
+sudo bash wazuh-install.sh -a</code></pre>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚡</span>
+        <div>If you get an OS compatibility error, add the <code>-i</code> flag to bypass the check. This is safe for lab use. <a class="xref" href="troubleshooting.html#ts-wazuh-os">⚠ See TS-09</a></div>
+      </div>
+
+      <p>After install completes, retrieve your dashboard credentials:</p>
+<pre data-lang="bash"><code>sudo tar -O -xvf wazuh-install-files.tar wazuh-install-files/wazuh-passwords.txt</code></pre>
+      <p>Access the dashboard from your host browser: <strong>https://172.16.0.101</strong> (accept the self-signed cert warning). Login with <strong>username: admin</strong> and the generated password. <a class="xref" href="troubleshooting.html#ts-wazuh-pw">⚠ See TS-10</a></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 2</span>
+      <span class="step-title">Install Wazuh Agent on CLIENT1</span>
+    </div>
+    <div class="step-body">
+      <p>On CLIENT1 in PowerShell as Administrator:</p>
+<pre data-lang="powershell"><code><span class="cm"># Step 1 — Download the agent MSI (must match your manager version: 4.7.5)</span>
+<span class="var">$client</span> = <span class="fn">New-Object</span> System.Net.WebClient
+<span class="var">$client</span>.DownloadFile(
+  <span class="str">"https://packages.wazuh.com/4.x/windows/wazuh-agent-4.7.5-1.msi"</span>,
+  <span class="str">"C:\Users\admin\Downloads\wazuh-agent.msi"</span>
+)
+
+<span class="cm"># Step 2 — Verify file size (~50MB)</span>
+<span class="fn">Get-Item</span> <span class="str">"C:\Users\admin\Downloads\wazuh-agent.msi"</span> | Select-Object Name, Length</code></pre>
+
+      <div class="callout warn">
+        <span class="callout-icon">⚡</span>
+        <div>If the install fails with "this installation package could not be opened", the MSI downloaded incompletely. Check file size — it should be ~50MB. Delete and re-download. <a class="xref" href="troubleshooting.html#ts-msi">⚠ See TS-11</a></div>
+      </div>
+
+<pre data-lang="powershell"><code><span class="cm"># Step 3 — Install with verbose logging (shows errors instead of failing silently)</span>
+msiexec.exe /i <span class="str">"C:\Users\admin\Downloads\wazuh-agent.msi"</span> `
+  WAZUH_MANAGER=<span class="str">"172.16.0.101"</span> `
+  WAZUH_AGENT_NAME=<span class="str">"CLIENT1-Honeypot"</span> `
+  /l*v <span class="str">"C:\wazuh-install.log"</span>
+
+<span class="cm"># Step 4 — Start the service</span>
+NET START WazuhSvc
+
+<span class="cm"># Step 5 — Verify connection</span>
+<span class="fn">Get-Service</span> WazuhSvc
+<span class="fn">Get-Content</span> <span class="str">"C:\Program Files (x86)\ossec-agent\ossec.log"</span> -Tail 20</code></pre>
+
+      <p>Look for <code>Connected to the server</code> in the log output. <a class="xref" href="troubleshooting.html#ts-wazsvc">⚠ See TS-12</a></p>
+
+      <p>Test connectivity to manager on port 1514:</p>
+<pre data-lang="powershell"><code><span class="fn">Test-NetConnection</span> -ComputerName <span class="num">172.16.0.101</span> -Port <span class="num">1514</span>
+<span class="cm"># Expected: TcpTestSucceeded: True</span></code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 3</span>
+      <span class="step-title">Install Wazuh Agent on DC</span>
+    </div>
+    <div class="step-body">
+      <p>Repeat the same process on DC — gives full domain visibility for lateral movement detection:</p>
+<pre data-lang="powershell"><code>msiexec.exe /i <span class="str">"C:\Users\admin\Downloads\wazuh-agent.msi"</span> `
+  WAZUH_MANAGER=<span class="str">"172.16.0.101"</span> `
+  WAZUH_AGENT_NAME=<span class="str">"DC-DomainController"</span> `
+  /l*v <span class="str">"C:\wazuh-install-dc.log"</span>
+NET START WazuhSvc</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 4</span>
+      <span class="step-title">Configure Wazuh to Ingest Snort Alerts</span>
+    </div>
+    <div class="step-body">
+      <p>On CLIENT1, open <span class="ic">C:\Program Files (x86)\ossec-agent\ossec.conf</span> in Notepad <strong>as Administrator</strong>. <a class="xref" href="troubleshooting.html#ts-ossec">⚠ See TS-13</a></p>
+      <ol>
+        <li>Press <strong>Ctrl+F</strong> and search for <code>&lt;/ossec_config&gt;</code></li>
+        <li>Insert this block <strong>immediately before</strong> the closing tag:</li>
+      </ol>
+<pre data-lang="xml"><code>  &lt;localfile&gt;
+    &lt;log_format&gt;snort-full&lt;/log_format&gt;
+    &lt;location&gt;C:\Snort\log\alert.ids&lt;/location&gt;
+  &lt;/localfile&gt;
+
+&lt;/ossec_config&gt;</code></pre>
+      <ol start="3">
+        <li>File → Save</li>
+        <li>Restart the agent:</li>
+      </ol>
+<pre data-lang="powershell"><code><span class="fn">Restart-Service</span> WazuhSvc
+<span class="fn">Get-Content</span> <span class="str">"C:\Program Files (x86)\ossec-agent\ossec.log"</span> -Tail 30
+<span class="cm"># Look for: snort or alert.ids in the log output</span></code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">STEP 5</span>
+      <span class="step-title">Install Sysmon for Deep Endpoint Visibility</span>
+    </div>
+    <div class="step-body">
+      <p>Sysmon captures process creation, network connections, file hashes, and registry changes — exactly what attackers leave behind.</p>
+<pre data-lang="powershell"><code><span class="cm"># Download Sysmon (Microsoft Sysinternals)</span>
+<span class="fn">Invoke-WebRequest</span> -Uri <span class="str">"https://download.sysinternals.com/files/Sysmon.zip"</span> -OutFile sysmon.zip
+<span class="fn">Expand-Archive</span> sysmon.zip -DestinationPath C:\Sysmon
+
+<span class="cm"># Download SwiftOnSecurity config (industry-standard baseline)</span>
+<span class="fn">Invoke-WebRequest</span> -Uri <span class="str">"https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml"</span> `
+  -OutFile C:\Sysmon\sysmon-config.xml
+
+<span class="cm"># Install</span>
+C:\Sysmon\Sysmon64.exe -accepteula -i C:\Sysmon\sysmon-config.xml</code></pre>
+      <p>Wazuh automatically reads Sysmon events from the Windows Event Log via its built-in rules.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- VERIFICATION -->
+<section class="phase" id="verification">
+  <div class="phase-header">
+    <div class="phase-num">✓</div>
+    <div class="phase-title">
+      <p class="section-label">// Final Check</p>
+      <h2>Lab Verification &amp; What to Expect</h2>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-header">
+      <span class="step-num">VERIFY</span>
+      <span class="step-title">End-to-End Alert Chain</span>
+    </div>
+    <div class="step-body">
+      <p>Test the full detection chain from another machine:</p>
+<pre data-lang="powershell"><code><span class="cm"># 1 — Ping CLIENT1's bridged IP (should trigger Snort ICMP alert)</span>
+ping 192.168.1.150 -t
+
+<span class="cm"># 2 — Check Snort fired</span>
+type C:\Snort\log\alert.ids
+
+<span class="cm"># 3 — Confirm agent is running</span>
+<span class="fn">Get-Service</span> WazuhSvc
+
+<span class="cm"># 4 — Check ossec.log for snort ingestion</span>
+<span class="fn">Get-Content</span> <span class="str">"C:\Program Files (x86)\ossec-agent\ossec.log"</span> -Tail 20</code></pre>
+
+      <p><strong>In the Wazuh Dashboard</strong> (https://172.16.0.101):</p>
+      <ul>
+        <li>Navigate to <strong>Agents</strong> — CLIENT1-Honeypot and DC-DomainController should show <span style="color:var(--accent3)">● Active</span></li>
+        <li>Navigate to <strong>Security Events</strong> — Snort alerts appear with source IP, timestamp, and rule message</li>
+        <li>Navigate to <strong>Integrity Monitoring</strong> — Sysmon process events show up here</li>
+      </ul>
+
+      <p><strong>Attack signatures this lab captures:</strong></p>
+      <ul>
+        <li>🔴 RDP/SMB brute-force — Snort threshold alerts + Windows Event ID 4625 (failed logon)</li>
+        <li>🔴 Credential access — Sysmon Event ID 10 (lsass.exe access)</li>
+        <li>🟡 Port scans — Snort SYN flood detection</li>
+        <li>🟡 Lateral movement — Sysmon + Wazuh unusual process spawning</li>
+        <li>🟡 Persistence — Registry run key changes, scheduled task creation</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<hr class="divider">
+
+<!-- SKILLS -->
+<section class="phase" id="skills">
+  <p class="section-label">// Portfolio Value</p>
+  <h2>Skills Demonstrated</h2>
+  <p style="color:var(--text-dim); margin-bottom:1.5rem;">This lab directly maps to real job requirements for SOC Analyst, Jr. Sysadmin, and Blue Team roles.</p>
+  <div class="skills-grid">
+    <div class="skill-card">
+      <h4>Network Segmentation</h4>
+      <p>Designed multi-VMnet topology isolating honeypot traffic from internal domain using VMware virtual switches and Windows Firewall rules.</p>
+    </div>
+    <div class="skill-card">
+      <h4>Active Directory</h4>
+      <p>Maintained domain-joined honeypot with domain users, GPO, and DC-based DHCP/DNS while introducing intentional vulnerabilities.</p>
+    </div>
+    <div class="skill-card">
+      <h4>IDS Configuration</h4>
+      <p>Installed and configured Snort 2.9.x on Windows, authored custom detection rules, resolved config errors, and validated against live traffic.</p>
+    </div>
+    <div class="skill-card">
+      <h4>SIEM Deployment</h4>
+      <p>Deployed Wazuh all-in-one on Ubuntu, enrolled multiple agents, and configured cross-source log ingestion (Snort + Windows Events + Sysmon).</p>
+    </div>
+    <div class="skill-card">
+      <h4>PowerShell Scripting</h4>
+      <p>Used PowerShell throughout for system configuration, service management, firewall rules, user creation, and connectivity testing.</p>
+    </div>
+    <div class="skill-card">
+      <h4>Threat Detection</h4>
+      <p>Built detection coverage for brute-force, LSASS access, lateral movement, persistence, and network reconnaissance across the kill chain.</p>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <p style="margin-bottom:6px;">Active Directory Honeypot Lab · VMware Workstation · Built with Snort 2.9.x + Wazuh 4.7.5</p>
+  <p style="color:var(--border);">GitHub Portfolio Project · <a href="troubleshooting.html" style="color:var(--accent); text-decoration:none;">→ Troubleshooting Guide</a></p>
+</footer>
+
+</body>
+</html>
