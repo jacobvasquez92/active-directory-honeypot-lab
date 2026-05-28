@@ -1,7 +1,7 @@
 # 🛡️ Active Directory Honeypot Lab — VMware IDS & SIEM Monitoring
 
-> **Blue Team Lab** | VMware Workstation · Snort IDS · Wazuh SIEM · Windows Server 2019 · Windows 10
-
+> **Blue Team Lab** | VMware Workstation · Snort IDS · Wazuh SIEM · Windows Server 2019 · Windows 10  
+[Tutorial web page](https://github.com/jacobvasquez92/active-directory-honeypot-lab/blob/main/README.md)
 ---
 
 A hands-on cybersecurity lab that deploys a domain-joined Windows honeypot with real-time intrusion detection and SIEM monitoring — built entirely in VMware Workstation. This project demonstrates network segmentation, IDS rule authoring, SIEM deployment, and end-to-end attack chain detection relevant to SOC Analyst and Blue Team roles.
